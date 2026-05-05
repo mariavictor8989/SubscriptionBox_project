@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - FreshBox</title>
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #fdfcf7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex; align-items: center;
+            justify-content: center; min-height: 100vh; margin: 20px 0;
+        }
+        .register-container {
+            width: 100%; max-width: 500px; padding: 40px;
+            text-align: center; background-color: white;
+            border: 1px solid #e0e0e0; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        .register-container h1 { font-weight: 800; font-size: 2.2rem; margin-bottom: 10px; color: #212529; }
+        .subtitle { color: #414040; margin-bottom: 30px; font-size: 0.95rem; }
+        .form-control, .form-select {
+            border: 1px solid #ddd; border-radius: 8px;
+            padding: 12px 15px; margin-bottom: 15px; font-size: 1rem; height: auto;
+        }
+        .form-control:focus, .form-select:focus { border-color: #2c7a2c; box-shadow: none; }
+        .btn-register {
+            background-color: #212529; color: white; width: 100%;
+            padding: 14px; border: none; border-radius: 8px;
+            font-weight: bold; font-size: 1.1rem; margin-top: 15px; transition: 0.3s;
+        }
+        .btn-register:hover { background-color: #000; transform: translateY(-1px); }
+        .terms { font-size: 0.8rem; color: #444343; margin-top: 15px; line-height: 1.4; }
+        .terms a { color: #212529; text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="register-container">
+    <h1>📦 FreshBox</h1>
+    <p class="subtitle">Join FreshBox and start your journey!</p>
+    <form action="register_process.php" method="POST">
+        <input type="text" name="full_name" class="form-control" placeholder="Full Name" required>
+        <input type="email" name="user_email" class="form-control" placeholder="Email Address" required>
+        <input type="password" name="user_password" class="form-control" placeholder="Create Password (min 8 chars)" required>
+        <select name="subscription_tier" class="form-select" required>
+            <option value="" disabled selected>Choose your plan...</option>
+            <option value="standard">Standard Plan — 299 EGP/mo</option>
+            <option value="premium">Premium Plan — 499 EGP/mo</option>
+            <option value="vip">VIP Plan — 799 EGP/mo</option>
+        </select>
+        <button type="submit" class="btn-register shadow-sm">Sign Up</button>
+    </form>
+    <p class="terms">By signing up, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</p>
+    <hr style="margin: 25px 0; opacity: 0.1;">
+    <p style="font-size: 0.9rem; color: #666;">
+        Already have an account?
+        <a href="login.html" style="color: #2c7a2c; font-weight: bold; text-decoration: none;">Log in</a>
+    </p>
+</div>
+</body>
+</html>
