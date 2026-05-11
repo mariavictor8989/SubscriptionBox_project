@@ -114,27 +114,34 @@ class UserController extends Controller {
     }
 
     public function orderBox(): void {
-        $this->requireLogin();
-        $userId  = $_SESSION['user_id'];
-        $error   = '';
-        $success = false;
-        $orderId = null;
-        $amount  = 0;
+    $this->requireLogin();
+    $userId  = $_SESSION['user_id'];
+    $error   = '';
+    $success = false;
+    $orderId = null;
+    $amount  = 0;
 
-        $activeBox   = $this->boxModel->getActiveBox($userId);
-        $activeBoxId = $activeBox['id'] ?? null;
-        $addonTotal  = $activeBoxId ? $this->boxModel->getAddonTotal($activeBoxId) : 0;
-        $addonItems  = $activeBoxId ? array_filter($this->boxModel->getItems($activeBoxId), fn($i) => $i['is_addon']) : [];
+    $activeBox   = $this->boxModel->getActiveBox($userId);
+    $activeBoxId = $activeBox['id'] ?? null;
+    $addonTotal  = $activeBoxId ? $this->boxModel->getAddonTotal($activeBoxId) : 0;
+    $addonItems  = $activeBoxId ? array_filter($this->boxModel->getItems($activeBoxId), fn($i) => $i['is_addon']) : [];
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $subId         = (int) $_POST['subscription_id'];
-            $addressId     = (int) $_POST['address_id'];
-            $existingBoxId = (int) ($_POST['existing_box_id'] ?? 0);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $subId         = (int) $_POST['subscription_id'];
+        $addressId     = (int) $_POST['address_id'];
+        $existingBoxId = (int) ($_POST['existing_box_id'] ?? 0);
+        
+        $cardNumber = trim($_POST['card_number'] ?? '');
+        $cvv        = trim($_POST['cvv'] ?? '');
+        $expiry     = trim($_POST['expiry'] ?? '');
 
-            $subData  = null;
-            $addrData = null;
-            $db       = Database::getInstance()->getConnection();
+        $db = Database::getInstance()->getConnection();
 
+        if (empty($cardNumber) || strlen($cardNumber) < 16) {
+            $error = 'Please enter a valid 16-digit card number.';
+        } elseif (empty($cvv) || strlen($cvv) < 3) {
+            $error = 'Invalid CVV code.';
+        } else {
             $subStmt = $db->prepare("SELECT us.*, sp.price, sp.name FROM user_subscriptions us JOIN subscription_plans sp ON sp.id = us.plan_id WHERE us.id = ? AND us.user_id = ? AND us.status = 'active'");
             $subStmt->bind_param("ii", $subId, $userId);
             $subStmt->execute();
@@ -145,46 +152,54 @@ class UserController extends Controller {
             $addrStmt->execute();
             $addrData = $addrStmt->get_result()->fetch_assoc();
 
-            if (!$subData)  { $error = 'Invalid subscription.'; }
-            elseif (!$addrData) { $error = 'Invalid address.'; }
-            else {
-                $boxId = $existingBoxId > 0 ? $existingBoxId : $this->boxModel->create($subId, $userId);
+            if (!$subData) { 
+                $error = 'Invalid subscription plan selected.'; 
+            } elseif (!$addrData) { 
+                $error = 'Please select a valid delivery address.'; 
+            } else {
+                if ($cvv === '000') {
+                    $error = 'Payment Declined: Insufficient funds or invalid card details.';
+                } else {
+                    $boxId = $existingBoxId > 0 ? $existingBoxId : $this->boxModel->create($subId, $userId);
 
-                $addonPrice = $this->boxModel->getAddonTotal($boxId);
-                $subtotal   = $subData['price'] + $addonPrice;
-                $tax        = round($subtotal * 0.14, 2);
-                $amount     = round($subtotal + $tax, 2);
+                    $addonPrice = $this->boxModel->getAddonTotal($boxId);
+                    $subtotal   = $subData['price'] + $addonPrice;
+                    $tax        = round($subtotal * 0.14, 2);
+                    $amount     = round($subtotal + $tax, 2);
 
-                $orderId = $this->orderModel->create($userId, $boxId, $subId, $addressId, $amount, $tax);
-                $this->orderModel->createShipment($orderId);
-                $this->addNotification($userId, 'subscription', "Order #$orderId placed! Total: " . number_format($amount, 2) . " EGP");
-                $success = true;
+                    $orderId = $this->orderModel->create($userId, $boxId, $subId, $addressId, $amount, $tax);
+                    $this->orderModel->createShipment($orderId);
+                    
+                    $this->addNotification($userId, 'subscription', "Payment Successful! Order #$orderId has been placed for " . number_format($amount, 2) . " EGP");
+                    $success = true;
+                }
             }
         }
-
-        $db       = Database::getInstance()->getConnection();
-        $subsStmt = $db->prepare("SELECT us.*, sp.name, sp.price FROM user_subscriptions us JOIN subscription_plans sp ON sp.id = us.plan_id WHERE us.user_id = ? AND us.status = 'active'");
-        $subsStmt->bind_param("i", $userId);
-        $subsStmt->execute();
-        $subscriptions = $subsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-        $addrStmt = $db->prepare("SELECT * FROM addresses WHERE user_id = ? AND is_serviceable = 1");
-        $addrStmt->bind_param("i", $userId);
-        $addrStmt->execute();
-        $addresses = $addrStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-        $this->render('user/order_box', [
-            'success'       => $success,
-            'orderId'       => $orderId,
-            'amount'        => $amount,
-            'error'         => $error,
-            'subscriptions' => $subscriptions,
-            'addresses'     => $addresses,
-            'activeBoxId'   => $activeBoxId,
-            'addonItems'    => $addonItems,
-            'addonTotal'    => $addonTotal,
-        ]);
     }
+
+    $db = Database::getInstance()->getConnection();
+    $subsStmt = $db->prepare("SELECT us.*, sp.name, sp.price FROM user_subscriptions us JOIN subscription_plans sp ON sp.id = us.plan_id WHERE us.user_id = ? AND us.status = 'active'");
+    $subsStmt->bind_param("i", $userId);
+    $subsStmt->execute();
+    $subscriptions = $subsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    $addrStmt = $db->prepare("SELECT * FROM addresses WHERE user_id = ? AND is_serviceable = 1");
+    $addrStmt->bind_param("i", $userId);
+    $addrStmt->execute();
+    $addresses = $addrStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    $this->render('user/order_box', [
+        'success'       => $success,
+        'orderId'       => $orderId,
+        'amount'        => $amount,
+        'error'         => $error,
+        'subscriptions' => $subscriptions,
+        'addresses'     => $addresses,
+        'activeBoxId'   => $activeBoxId,
+        'addonItems'    => $addonItems,
+        'addonTotal'    => $addonTotal,
+    ]);
+}
 
     public function customizeBox(): void {
         $this->requireLogin();

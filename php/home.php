@@ -155,7 +155,7 @@
             <div class="col-md-6 text-start">
                 <h1 class="hero-title">NOTHING<br>HITS LIKE<br>HOME COOKING</h1>
                 <p class="hero-subtitle">Cook up 100+ delicious recipes — <br>ready in under 30 minutes! Flexible plans for everyone.</p>
-                <a href="register.html" class="btn-main shadow-lg">See Pricing & Plans</a>
+                <a href="#" class="btn-main shadow-lg">See Pricing & Plans</a>
                 <p class="promo-text small">No commitment. Skip or cancel anytime.</p>
             </div>
             <div class="col-md-6 text-center">

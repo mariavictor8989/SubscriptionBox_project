@@ -102,6 +102,24 @@
                 <hr class="my-2">
                 <div class="d-flex justify-content-between total-row"><span>Total</span><span id="total">—</span></div>
             </div>
+            <div class="mt-4 p-3 border rounded shadow-sm bg-light">
+    <h6 class="fw-bold mb-3">💳 Payment Information</h6>
+    <div class="mb-3">
+        <label class="form-label small fw-bold">Card Number</label>
+        <input type="text" name="card_number" class="form-control" placeholder="1234 5678 9101 1121" maxlength="16">
+    </div>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label small fw-bold">Expiry Date</label>
+            <input type="text" name="expiry" class="form-control" placeholder="MM/YY">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label small fw-bold">CVV</label>
+            <input type="password" name="cvv" class="form-control" placeholder="123" maxlength="3">
+        </div>
+    </div>
+</div>
+<br>
 
             <button type="submit" class="btn btn-success w-100 py-3 fw-bold fs-5">🛒 Place Order</button>
         </form>
